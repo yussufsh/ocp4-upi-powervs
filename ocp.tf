@@ -11,9 +11,32 @@ resource "random_id" "label" {
 }
 
 locals {
+    private_key_file    = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : var.private_key_file
+    private_key         = var.private_key != "" ? var.private_key : (fileexists("${path.cwd}/data/id_rsa") ? file(coalesce(local.private_key_file, "/dev/null")) : "")
+
     # Generates cluster_id as combination of cluster_id_prefix + (random_id or user-defined cluster_id)
     cluster_id      = var.cluster_id == "" ? random_id.label[0].hex : "${var.cluster_id_prefix}-${var.cluster_id}"
     storage_type    = lookup(var.bastion, "count", 1) > 1 ? "none" : var.storage_type
+}
+
+# Get the public key if private_key is provided
+data "tls_public_key" "public_key" {
+    count           = local.private_key == "" ? 0 : 1
+    private_key_pem = local.private_key
+}
+
+# Generates a secure RSA key if not provided
+resource "tls_private_key" "private_key" {
+    count           = local.private_key == "" ? 1 : 0
+    algorithm       = "RSA"
+}
+
+# Save private key when RSA key is created
+resource "local_file" "private_key_file" {
+    count               = local.private_key == "" ? 1 : 0
+    sensitive_content   = tls_private_key.private_key[0].private_key_pem
+    filename            = "${path.cwd}/data/id_rsa"
+    file_permission     = "0600"
 }
 
 module "prepare" {
@@ -30,8 +53,8 @@ module "prepare" {
     #Specify dns for public network. Trim spaces that may be present in splitted values.
     network_dns                     = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders): trimspace(dns)]
     rhel_username                   = var.rhel_username
-    private_key                     = local.private_key
-    public_key                      = local.public_key
+    private_key                     = local.private_key == "" ? tls_private_key.private_key[0].private_key_pem : local.private_key
+    public_key                      = local.private_key == "" ? tls_private_key.private_key[0].public_key_openssh : data.tls_public_key.public_key[0].public_key_openssh
     ssh_agent                       = var.ssh_agent
     rhel_subscription_username      = var.rhel_subscription_username
     rhel_subscription_password      = var.rhel_subscription_password
@@ -78,7 +101,7 @@ module "install" {
     bastion_vip                     = module.prepare.bastion_vip
     bastion_ip                      = module.prepare.bastion_ip
     rhel_username                   = var.rhel_username
-    private_key                     = local.private_key
+    private_key                     = local.private_key == "" ? tls_private_key.private_key[0].private_key_pem : local.private_key
     ssh_agent                       = var.ssh_agent
     bastion_internal_vip            = module.prepare.bastion_internal_vip
     bastion_public_ip               = module.prepare.bastion_public_ip
@@ -88,7 +111,7 @@ module "install" {
     bootstrap_mac                   = module.nodes.bootstrap_mac
     master_macs                     = module.nodes.master_macs
     worker_macs                     = module.nodes.worker_macs
-    public_key                      = local.public_key
+    public_key                      = local.private_key == "" ? tls_private_key.private_key[0].public_key_openssh : data.tls_public_key.public_key[0].public_key_openssh
     pull_secret                     = file(coalesce(var.pull_secret_file, "/dev/null"))
     openshift_install_tarball       = var.openshift_install_tarball
     openshift_client_tarball        = var.openshift_client_tarball
