@@ -115,28 +115,16 @@ variable "rhel_username" {
     default = "root"
 }
 
-variable "public_key_file" {
-    description = "Path to public key file"
-    # if empty, will default to ${path.cwd}/data/id_rsa.pub
-    default     = "~/.ssh/id_rsa.pub"
-}
-
 variable "private_key_file" {
     description = "Path to private key file"
     # if empty, will default to ${path.cwd}/data/id_rsa
-    default     = "~/.ssh/id_rsa"
+    default     = ""
 }
 
 variable "private_key" {
     description = "content of private ssh key"
     # if empty string will read contents of file at var.private_key_file
     default = ""
-}
-
-variable "public_key" {
-    description = "Public key"
-    # if empty string will read contents of file at var.public_key_file
-    default     = ""
 }
 
 variable "rhel_subscription_username" {
@@ -235,12 +223,6 @@ variable proxy {
 #    }
 }
 
-locals {
-    private_key_file    = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : var.private_key_file
-    public_key_file     = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : var.public_key_file
-    private_key         = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
-    public_key          = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
-}
 
 ################################################################
 ### OpenShift variables

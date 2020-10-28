@@ -24,7 +24,6 @@ system_type                 = "s922"
 network_name                = "ocp-net"
 
 rhel_username               = "root"
-public_key_file             = "data/id_rsa.pub"
 private_key_file            = "data/id_rsa"
 rhel_subscription_username  = "<subscription-id>"
 rhel_subscription_password  = "<subscription-password>"

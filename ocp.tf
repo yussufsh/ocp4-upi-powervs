@@ -11,9 +11,36 @@ resource "random_id" "label" {
 }
 
 locals {
+    private_key_file    = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : var.private_key_file
+    private_key_str     = var.private_key != "" ? var.private_key : file(coalesce(local.private_key_file, "/dev/null"))
+
     # Generates cluster_id as combination of cluster_id_prefix + (random_id or user-defined cluster_id)
     cluster_id      = var.cluster_id == "" ? random_id.label[0].hex : "${var.cluster_id_prefix}-${var.cluster_id}"
     storage_type    = lookup(var.bastion, "count", 1) > 1 ? "none" : var.storage_type
+}
+
+# Data source to get public_key if private_key is provided
+data "tls_public_key" "public_key" {
+    count           = local.private_key_str != "" ? 1 : 0
+    private_key_pem = local.private_key_str
+}
+
+# Resurce to generate a secure RSA key if not provided
+resource "tls_private_key" "private_key" {
+    count           = local.private_key_str == "" ? 1 : 0
+    algorithm       = "RSA"
+}
+
+# Store private_key when RSA key is created
+resource "local_file" "private_key_file" {
+    sensitive_content   = local.private_key_str == "" ? tls_private_key.private_key[0].private_key_pem : local.private_key_str
+    filename            = "${path.cwd}/data/id_rsa"
+    file_permission     = "0600"
+}
+
+locals {
+    private_key     = local.private_key_str == "" ? tls_private_key.private_key[0].private_key_pem : local.private_key_str
+    public_key      = local.private_key_str == "" ? tls_private_key.private_key[0].public_key_openssh : data.tls_public_key.public_key[0].public_key_openssh
 }
 
 module "prepare" {
