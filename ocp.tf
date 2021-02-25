@@ -55,6 +55,7 @@ module "nodes" {
     processor_type                  = var.processor_type
     system_type                     = var.system_type
     network_name                    = var.network_name
+    pnetwork_name                   = module.prepare.pnetwork_name
     bastion_ip                      = lookup(var.bastion, "count", 1) > 1 ? module.prepare.bastion_vip : module.prepare.bastion_ip[0]
     cluster_domain                  = var.cluster_domain
     cluster_id                      = local.cluster_id

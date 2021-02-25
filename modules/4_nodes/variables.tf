@@ -24,6 +24,7 @@ variable "service_instance_id" {}
 variable "processor_type" {}
 variable "system_type" {}
 variable "network_name" {}
+variable "pnetwork_name" {}
 variable "rhcos_image_name" {}
 
 variable "bastion_ip" {}

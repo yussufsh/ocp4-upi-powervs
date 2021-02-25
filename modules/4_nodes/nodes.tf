@@ -23,6 +23,11 @@ data "ibm_pi_network" "network" {
     pi_cloud_instance_id    = var.service_instance_id
 }
 
+data "ibm_pi_network" "pnetwork" {
+    pi_network_name         = var.pnetwork_name
+    pi_cloud_instance_id    = var.service_instance_id
+}
+
 data "ibm_pi_image" "rhcos" {
     pi_image_name           = var.rhcos_image_name
     pi_cloud_instance_id    = var.service_instance_id
@@ -153,7 +158,7 @@ resource "ibm_pi_instance" "worker" {
     pi_image_id             = data.ibm_pi_image.rhcos.id
     pi_sys_type             = var.system_type
     pi_cloud_instance_id    = var.service_instance_id
-    pi_network_ids          = [data.ibm_pi_network.network.id]
+    pi_network_ids          = [data.ibm_pi_network.pnetwork.id, data.ibm_pi_network.network.id]
     pi_volume_ids           = var.worker_volume_size == "" ? null : ibm_pi_volume.worker[count.index].*.volume_id
 
     # Inject ignition source timeout to force ignition fail when HTTP file is not available for 500s. This will reboot the node and try ignition fetch process again.
