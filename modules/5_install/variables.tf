@@ -31,7 +31,6 @@ variable "dns_forwarders" {
 
 variable service_instance_id {}
 
-variable "gateway_ip" {}
 variable "cidr" {}
 variable "public_cidr" {}
 variable "bastion_count" {}

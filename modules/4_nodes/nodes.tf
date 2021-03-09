@@ -19,6 +19,7 @@
 ################################################################
 
 data "ibm_pi_network" "network" {
+    depends_on              = [var.bastion_public_ip]
     pi_network_name         = var.network_name
     pi_cloud_instance_id    = var.service_instance_id
 }

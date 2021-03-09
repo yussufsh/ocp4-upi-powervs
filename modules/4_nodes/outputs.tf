@@ -19,7 +19,7 @@
 ################################################################
 
 output "bootstrap_ip" {
-    value = join("",data.ibm_pi_instance_ip.bootstrap_ip.*.ip)
+    value = join("",coalesce(data.ibm_pi_instance_ip.bootstrap_ip.*.ip))
 }
 
 output "bootstrap_mac" {

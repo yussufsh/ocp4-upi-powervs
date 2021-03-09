@@ -55,8 +55,8 @@ module "nodes" {
     rhcos_image_name                = var.rhcos_image_name
     processor_type                  = var.processor_type
     system_type                     = var.system_type
-    network_name                    = var.network_name
-    bastion_ip                      = lookup(var.bastion, "count", 1) > 1 ? module.prepare.bastion_vip : module.prepare.bastion_ip[0]
+    network_name                    = "${local.cluster_id}-pub-net"
+    bastion_ip                      = lookup(var.bastion, "count", 1) > 1 ? module.prepare.bastion_internal_vip : module.prepare.bastion_internal_ip[0]
     cluster_domain                  = var.cluster_domain
     cluster_id                      = local.cluster_id
     bootstrap                       = var.bootstrap
@@ -79,12 +79,11 @@ module "install" {
     cluster_domain                  = var.cluster_domain
     cluster_id                      = local.cluster_id
     dns_forwarders                  = var.dns_forwarders
-    gateway_ip                      = module.prepare.gateway_ip
     cidr                            = module.prepare.cidr
     public_cidr                     = module.prepare.public_cidr
     bastion_count                   = lookup(var.bastion, "count", 1)
-    bastion_vip                     = module.prepare.bastion_vip
-    bastion_ip                      = module.prepare.bastion_ip
+    bastion_vip                     = module.prepare.bastion_internal_vip
+    bastion_ip                      = module.prepare.bastion_internal_ip
     rhel_username                   = var.rhel_username
     private_key                     = local.private_key
     ssh_agent                       = var.ssh_agent

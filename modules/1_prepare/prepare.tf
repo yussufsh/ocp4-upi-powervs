@@ -44,11 +44,6 @@ data "ibm_pi_image" "bastion" {
     pi_cloud_instance_id    = var.service_instance_id
 }
 
-data "ibm_pi_network" "network" {
-    pi_network_name         = var.network_name
-    pi_cloud_instance_id    = var.service_instance_id
-}
-
 resource "ibm_pi_network" "public_network" {
     pi_network_name         = "${var.cluster_id}-pub-net"
     pi_cloud_instance_id    = var.service_instance_id
@@ -80,21 +75,12 @@ resource "ibm_pi_instance" "bastion" {
     pi_instance_name        = "${var.cluster_id}-bastion-${count.index}"
     pi_proc_type            = var.processor_type
     pi_image_id             = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].id : local.catalog_bastion_image[0]
-    pi_network_ids          = [ibm_pi_network.public_network.network_id, data.ibm_pi_network.network.id]
+    pi_network_ids          = [ibm_pi_network.public_network.network_id]
     pi_key_pair_name        = ibm_pi_key.key.key_id
     pi_sys_type             = var.system_type
     pi_cloud_instance_id    = var.service_instance_id
     pi_health_status        = var.bastion_health_status
     pi_volume_ids           = var.storage_type == "nfs" ? ibm_pi_volume.volume.*.volume_id : null
-}
-
-data "ibm_pi_instance_ip" "bastion_ip" {
-    count                   = local.bastion_count
-    depends_on              = [ibm_pi_instance.bastion]
-
-    pi_instance_name        = ibm_pi_instance.bastion[count.index].pi_instance_name
-    pi_network_name         = data.ibm_pi_network.network.name
-    pi_cloud_instance_id    = var.service_instance_id
 }
 
 data "ibm_pi_instance_ip" "bastion_public_ip" {
@@ -369,14 +355,6 @@ resource "null_resource" "rhel83_fix" {
             "sudo yum remove cloud-init --noautoremove -y",
         ]
     }
-}
-
-resource "ibm_pi_network_port" "bastion_vip" {
-    count                   = local.bastion_count > 1 ? 1 : 0
-    depends_on              = [ibm_pi_instance.bastion]
-
-    pi_network_name         = data.ibm_pi_network.network.name
-    pi_cloud_instance_id    = var.service_instance_id
 }
 
 resource "ibm_pi_network_port" "bastion_internal_vip" {

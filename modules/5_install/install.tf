@@ -18,6 +18,12 @@
 #
 ################################################################
 
+data "ibm_pi_network" "pnetwork" {
+    depends_on              = [var.bastion_public_ip]
+    pi_network_name         = "${var.cluster_id}-pub-net"
+    pi_cloud_instance_id    = var.service_instance_id
+}
+
 locals {
 
     public_vrrp = {
@@ -46,7 +52,7 @@ locals {
         bastion_master_ip   = var.bastion_ip[0]
         bastion_backup_ip   = length(var.bastion_ip) > 1 ? slice(var.bastion_ip, 1, length(var.bastion_ip)) : []
         forwarders      = var.dns_forwarders
-        gateway_ip      = var.gateway_ip
+        gateway_ip      = data.ibm_pi_network.pnetwork.gateway
         netmask         = cidrnetmask(var.cidr)
         broadcast       = cidrhost(var.cidr,-1)
         ipid            = cidrhost(var.cidr, 0)
@@ -123,7 +129,7 @@ locals {
     powervs_config_vars = {
         ibm_cloud_dl_endpoint_net_cidr = var.ibm_cloud_dl_endpoint_net_cidr
         ibm_cloud_http_proxy           = var.ibm_cloud_http_proxy
-        ocp_node_net_gw                = var.gateway_ip
+        ocp_node_net_gw                = data.ibm_pi_network.pnetwork.gateway
     }
 
     upgrade_vars = {

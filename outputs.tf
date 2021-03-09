@@ -23,7 +23,7 @@ output "cluster_id" {
 }
 
 output "bastion_private_vip" {
-    value = module.prepare.bastion_vip == "" ? null : module.prepare.bastion_vip
+    value = module.prepare.bastion_internal_vip == "" ? null : module.prepare.bastion_internal_vip
 }
 
 output "bastion_external_vip" {
@@ -31,7 +31,7 @@ output "bastion_external_vip" {
 }
 
 output "bastion_private_ip" {
-    value = join(", ", module.prepare.bastion_ip)
+    value = join(", ", module.prepare.bastion_internal_ip)
 }
 
 output "bastion_public_ip" {
