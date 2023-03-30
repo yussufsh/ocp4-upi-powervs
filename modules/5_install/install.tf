@@ -387,19 +387,8 @@ resource "null_resource" "install_config" {
   }
 }
 
-
-resource "ibm_pi_instance_action" "bootstrap_start" {
-  depends_on = [null_resource.config, null_resource.pre_install, null_resource.install_config]
-  count      = var.bootstrap_count == 0 ? 0 : 1
-
-  pi_cloud_instance_id = var.service_instance_id
-  pi_instance_id       = "${var.name_prefix}bootstrap"
-  pi_action            = "start"
-  pi_health_status     = "WARNING"
-}
-
 resource "null_resource" "bootstrap_config" {
-  depends_on = [ibm_pi_instance_action.bootstrap_start]
+  depends_on = [null_resource.config, null_resource.pre_install, null_resource.install_config]
 
   triggers = {
     worker_count = length(var.worker_ips)
@@ -422,18 +411,8 @@ resource "null_resource" "bootstrap_config" {
   }
 }
 
-resource "ibm_pi_instance_action" "master_start" {
-  depends_on = [null_resource.config, null_resource.pre_install, null_resource.bootstrap_config, ibm_pi_instance_action.bootstrap_start]
-  count      = var.master_count
-
-  pi_cloud_instance_id = var.service_instance_id
-  pi_instance_id       = "${var.name_prefix}master-${count.index}"
-  pi_action            = "start"
-  pi_health_status     = "WARNING"
-}
-
 resource "null_resource" "bootstrap_complete" {
-  depends_on = [ibm_pi_instance_action.master_start]
+  depends_on = [null_resource.config, null_resource.pre_install, null_resource.bootstrap_config]
 
   triggers = {
     worker_count = length(var.worker_ips)
@@ -456,18 +435,8 @@ resource "null_resource" "bootstrap_complete" {
   }
 }
 
-resource "ibm_pi_instance_action" "worker_start" {
-  depends_on = [null_resource.config, null_resource.pre_install, null_resource.bootstrap_complete, ibm_pi_instance_action.master_start]
-  count      = var.worker_count
-
-  pi_cloud_instance_id = var.service_instance_id
-  pi_instance_id       = "${var.name_prefix}worker-${count.index}"
-  pi_action            = "start"
-  pi_health_status     = "WARNING"
-}
-
 resource "null_resource" "install" {
-  depends_on = [null_resource.bootstrap_complete, ibm_pi_instance_action.worker_start]
+  depends_on = [null_resource.config, null_resource.pre_install, null_resource.bootstrap_complete]
 
   triggers = {
     worker_count = length(var.worker_ips)
